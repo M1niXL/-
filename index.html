@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Моя идеология</title>
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <div class="main">
+        <div class="app" v-show="showMain">
+            <div class="app__header">
+                <p class="app__title">Тест: "Моя идеология"</p>
+                
+            </div>
+            <div class="app__body">
+                <button class="app__btn" @click="goToQuestions">
+                    <i class="fa fa-play-circle-o" aria-hidden="true"></i>
+                    <div class="app__btn-text">Начать</div>
+                </button>
+                <button class="app__btn" @click="goToAchivment">
+                    <i class="fa fa-trophy" aria-hidden="true"></i>
+                    <div class="app__btn-text">Мои результаты</div>
+                </button>
+                <button class="app__btn" @click="goToSocial">
+                    <i class="fa fa-user" aria-hidden="true"></i>
+                    <div class="app__btn-text">Об авторе</div>
+                </button>
+            </div>
+        </div>
+
+
+        <div class="app__achivments" v-show="showAchivment">
+            <div class="app__body">
+                <div class="app__body-inner">
+                    <h2 class="app__body-title">
+                        <i class="fa fa-trophy"aria-hidden="true"></i>
+                        Мои результаты
+                    </h2>
+                    <div class="app__body-top">
+                        <div class="app__card">
+                            <div class="app__text">Открыто идеологий:</div>
+                            <div class="app__count">{{openIdeology}}</div>
+                        </div>
+                        <div class="app__card">
+                            <div class="app__text">Всего игр:</div>
+                            <div class="app__count">{{totalGames}}</div>
+                        </div>
+                        <div class="app__card">
+                            <div class="app__text">Любимая идеология:</div>
+                            <div class="app__count">{{favoriteIdeology}}</div>
+                        </div>
+                    </div>
+                    <div class="app__body-middle" v-bind:data-resultIdeology="resultIdeology">
+                        <div class="app__results" v-for="(race, k) in results" v-show="showResultIdeology[k]" @click="goToResults(k)">
+                            <div class="app__results-img">
+                                <img class="img__result" :src="'img/' + k + '__logo.png'">
+                            </div>
+                            <div class="app__results-text">
+                                <p>{{results[k].name}}</p>
+                            </div>
+                        </div>
+                       
+                    
+                    </div>
+                    <div class="app-body-bottom">
+                        <div class="app__btn-back app__btn" @click="goToMain">
+                            <i class="fa fa-reply" aria-hidden="true"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="app" v-show="showQuestions">
+            <div class="app__header">
+                <div class="app__header-inner">
+                    <div class="app__count">#{{number + 1}}</div>
+                    <div class="app__text">{{currentQuestion.text}}</div>
+                </div>
+            </div>
+            <div class="app__body">
+                    <button class="app__btn" v-for="(answer, index) in currentQuestion.answers" 
+                    :key="index"
+                    @click="nextQuestion(answer.ideology)">
+                        <div class="app__btn-text">{{answer.text}}</div>
+                    </button>
+                    
+            </div>
+        </div>
+
+        <div class="app" v-show="showSocial">
+            <div class="app__body">
+
+                <p class="social app__card">Автор данной игры M1NIX.</p>
+                <a class="donate app__btn" target="_blank" href="https://www.donationalerts.com/r/m1nixl">поддержать автора</a>
+                <div class="app-body-bottom">
+                    <div class="app__btn-back app__btn" @click="goToMain">
+                        <i class="fa fa-reply" aria-hidden="true"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="app" v-show="showResults" v-bind:data-resultIdeology='resultIdeology'>
+            <div class="app__results">
+                <div class="app__body">
+                    <div class="app__results-inner">
+                        <div class="results__img">
+                            <img class='img-logo' :src="'img/' + resultIdeology + '__logo.png'">
+                        </div>
+                        <div v-if="results[resultIdeology]">
+                            <div class="results__title">{{ results[resultIdeology].name }}</div>
+                            <div class="results__text-box">{{ results[resultIdeology].description }}</div>
+                        </div>
+                        <div class="app-body-bottom">
+                            <div class="app__btn-back app__btn" @click="goToMain">
+                                <i class="fa fa-reply" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        
+
+    </div>
+    <script src="js/vue.js"></script>
+    <script src="js/const.js"></script>
+    
+    <script>
+        let app = new Vue ({
+            el:'.main',
+            data: {
+                showMain: true,
+                showSocial: false,
+                showAchivment: false,
+                showQuestions: false,
+                showResults: false,
+                number:0,
+                currentQuestion: null,
+                score: {
+                    'liberal': 0,
+                    'communist': 0,
+                    'nacionalist': 0,
+                    'nacist': 0,
+                },
+                
+                totalGame: localStorage.getItem('ideologyTotalGame') ? JSON.parse(localStorage.getItem('ideologyTotalGame')) : {
+                    'liberal': 0,
+                    'communist': 0,
+                    'nacionalist': 0,
+                    'nacist': 0,
+                },
+                totalGames: localStorage.getItem('ideologyTotalGames') ? localStorage.getItem('ideologyTotalGames') : 0,
+                questions: questions,
+                results: results,
+                resultIdeology: '',
+                currentQuestion: 0,
+            },
+            methods: {
+                shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]]; // Меняем местами элементы
+        }
+        return array;
+    },
+                goToMain() {
+                    this.showMain = true
+                    this.showSocial = false
+                    this.showAchivment = false
+                    this.showQuestions = false
+                    this.showResults = false
+                    this.resetGame();
+                },
+                goToSocial() {
+                    this.showMain = false
+                    this.showSocial = true
+                    this.showAchivment = false
+                    this.showQuestions = false
+                    this.showResults = false
+                },
+                goToAchivment() {
+                    if(this.totalGames > 0) {
+                    this.showMain = false
+                    this.showSocial = false
+                    this.showAchivment = true
+                    this.showQuestions = false
+                    this.showResults = false
+                    } else {
+                        this.goToQuestions()
+                    }
+                },
+                goToQuestions() {
+                    // this.score = {
+                    // 'liberal': 0,
+                    // 'communist': 0,
+                    // 'nacionalist': 0,
+                    // 'nacist': 0,
+                    this.number = 0;
+                    this.currentQuestion = this.questions[0];
+                //  }
+                
+
+                this.questions.forEach(question => {
+            question.answers = this.shuffleArray(question.answers);
+        });
+
+                    this.showMain = false
+                    this.showSocial = false
+                    this.showAchivment = false
+                    this.showQuestions = true
+                    this.showResults = false
+                },
+                goToResults(ideology) {
+                    this.resultIdeology = ideology;
+        this.totalGame[ideology]++;
+        localStorage.setItem('ideologyTotalGame', JSON.stringify(this.totalGame));
+                    this.showMain = false
+                    this.showSocial = false
+                    this.showAchivment = false
+                    this.showQuestions = false
+                    this.showResults = true
+                },
+                nextQuestion(ideology) {
+                    this.score[ideology]++;
+                    if (this.number >= this.questions.length - 1) {
+                        this.endGame();
+                        } else {
+                        this.number++;
+                        this.currentQuestion = this.questions[this.number];
+                        }
+                },
+                endGame() {
+    //                 this.totalGames++;
+    //                 localStorage.setItem('ideologyTotalGames', this.totalGames);
+    //                 let maxScore = 0;
+    //                 let result = "liberal"; // По умолчанию
+    //                 for (let ideology in this.score) {
+    //                  if (this.score[ideology] > maxScore) {
+    //                     maxScore = this.score[ideology];
+    //                     result = ideology;
+    //                 }
+    //                 }
+    
+    //                     this.resultIdeology = result;
+    //                     this.goToResults();
+    
+    // // Обновляем статистику
+    //                 this.totalGame[result]++;
+    //                 localStorage.setItem('ideologyTotalGame', JSON.stringify(this.totalGame));
+    const maxIdeology = Object.keys(this.score).reduce((a, b) => 
+                        this.score[a] > this.score[b] ? a : b
+                    );
+                    this.resultIdeology = maxIdeology;
+                    this.showResults = true;
+                    this.showQuestions = false;
+                    const userResults = JSON.parse(localStorage.getItem('userResults')) || {};
+    userResults[this.totalGames] = {
+        ideology: this.resultIdeology,
+        score: { ...this.score }
+    };
+    localStorage.setItem('userResults', JSON.stringify(userResults));
+
+    this.showResults = true;
+    this.showQuestions = false;
+
+    // Обновляем статистику
+    this.totalGames++;
+    localStorage.setItem('ideologyTotalGames', this.totalGames);
+    this.totalGame[maxIdeology]++;
+    localStorage.setItem('ideologyTotalGame', JSON.stringify(this.totalGame));
+
+                },
+                resetGame() {
+                    this.number = 0;
+                    this.score = {
+                        liberal: 0,
+                        communist: 0,
+                        nacionalist: 0,
+                        nacist: 0
+                    };
+                },
+
+                
+
+            },
+            computed: {
+                openIdeology() {
+                    let count = 0
+                    for(let i in this.totalGame) {
+                        if(this.totalGame[i] > 0) count++
+                    }
+                    return count
+                },
+                favoriteIdeology() {
+
+                    let max = 'liberal'
+                    for(let i in this.totalGame) {
+                        if(this.totalGame[i] > this.totalGame[max]) {
+                            max = i
+                        }
+                    }
+                    return results[max].name
+                    const userResults = JSON.parse(localStorage.getItem('userResults')) || {};
+        const ideologyCount = {
+            liberal: 0,
+            communist: 0,
+            nacionalist: 0,
+            nacist: 0
+        };
+
+        for (let gameId in userResults) {
+            const ideology = userResults[gameId].ideology;
+            ideologyCount[ideology]++;
+        }
+
+        let maxIdeology = 'liberal';
+        for (let ideology in ideologyCount) {
+            if (ideologyCount[ideology] > ideologyCount[maxIdeology]) {
+                maxIdeology = ideology;
+            }
+        }
+
+        return this.results[maxIdeology]?.name || "Не определено";
+                },
+                showResultIdeology() {
+                    return {
+                        'liberal': this.totalGame.liberal > 0 ? true : false,
+                        'communist': this.totalGame.communist > 0 ? true : false,
+                        'nacionalist': this.totalGame.nacionalist > 0 ? true : false,
+                        'nacist': this.totalGame.nacist > 0 ? true : false,
+                    }
+                    const userResults = JSON.parse(localStorage.getItem('userResults')) || {};
+    const ideologyCount = {
+        liberal: 0,
+        communist: 0,
+        nacionalist: 0,
+        nacist: 0
+    };
+
+    for (let gameId in userResults) {
+        const ideology = userResults[gameId].ideology;
+        ideologyCount[ideology]++;
+    }
+
+    let maxIdeology = 'liberal';
+    for (let ideology in ideologyCount) {
+        if (ideologyCount[ideology] > ideologyCount[maxIdeology]) {
+            maxIdeology = ideology;
+        }
+    }
+
+    return this.results[maxIdeology]?.name || "Не определено";
+                }
+            }
+        })
+
+    </script>
+</body>
+</html>
